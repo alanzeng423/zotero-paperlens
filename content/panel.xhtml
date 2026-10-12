@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <title>PaperLens</title>
+  <link rel="stylesheet" href="chrome://global/skin/global.css"/>
+  <link rel="stylesheet" href="chrome://zotero-platform/content/zotero.css"/>
+  <link rel="stylesheet" href="panel.css"/>
+  <script src="locale.js" defer="defer"></script>
+  <script src="panel.js" defer="defer"></script>
+</head>
+<body>
+  <span id="paper-title" hidden="hidden"></span>
+  <nav id="panel-tabs" class="tabs" role="tablist" data-i18n-aria="tabs">
+    <button class="nav active" data-view="reading" data-i18n="paper" role="tab" aria-selected="true">论文</button>
+    <button class="nav" data-view="translation" data-i18n="translation" role="tab" aria-selected="false">翻译</button>
+    <button class="nav" data-view="history" data-i18n="history" role="tab" aria-selected="false">记录</button>
+    <button class="nav" data-view="settings" data-i18n="settings" role="tab" aria-selected="false">设置</button>
+  </nav>
+  <main>
+    <div id="notice" class="notice" role="status" aria-live="polite" hidden="hidden"></div>
+    <section id="view-reading" class="view">
+      <div class="actions session-actions">
+        <button id="start-reading" data-i18n="read">读取全文</button>
+        <button id="cancel" data-i18n="stop" hidden="hidden">停止</button>
+        <span id="session-status" class="muted" role="status">未读取</span>
+      </div>
+      <label id="reading-intro" class="check"><input id="auto-highlight" type="checkbox" checked="checked"/><span data-i18n="autoHighlight">自动标出重点</span></label>
+      <div id="progress-wrap" hidden="hidden">
+        <div class="row"><span id="progress-label"></span><span id="progress-count" class="muted"></span></div>
+        <progress id="progress" max="100" value="0"></progress>
+      </div>
+      <div id="understanding" hidden="hidden">
+        <div class="actions highlight-actions"><button id="write-highlights" data-i18n="writeHighlights">写入高亮</button><button id="toggle-highlights" data-i18n="hideHighlights">隐藏高亮</button></div>
+        <div id="digest"></div>
+        <details><summary data-i18n="highlights">重点</summary><div id="highlights"></div></details>
+        <details><summary data-i18n="notes">逐页笔记</summary><div id="reading-notes"></div></details>
+        <details><summary data-i18n="glossary">术语</summary><div id="glossary"></div></details>
+      </div>
+      <details class="service-info"><summary data-i18n="apiDetails">服务与用量</summary><p id="privacy" class="muted"></p><p id="coverage" class="muted"></p><p id="usage" class="muted"></p></details>
+    </section>
+    <section id="view-translation" class="view" hidden="hidden">
+      <div class="row translation-actions">
+        <label class="page-label"><span data-i18n="page">页码</span> <input id="selection-page" type="number" min="1" value="1"/></label>
+        <div class="actions"><button id="cancel-translation" data-i18n="cancel" hidden="hidden">取消</button><button id="translate" data-i18n="translate">翻译</button></div>
+      </div>
+      <details id="source-details" open="open"><summary id="source-summary" data-i18n="source">原文</summary><textarea id="selection" rows="3" data-i18n-placeholder="sourcePlaceholder" placeholder="选取或粘贴原文"></textarea></details>
+      <div id="translation-result"></div>
+    </section>
+    <section id="view-history" class="view" hidden="hidden"><div id="history"></div></section>
+    <section id="view-settings" class="view" hidden="hidden">
+      <form id="settings-form">
+        <div class="form-grid">
+          <label for="ui-language" data-i18n="uiLanguage">界面语言</label><select id="ui-language"><option value="zh-CN" data-i18n="chinese">简体中文</option><option value="en-US" data-i18n="english">英语</option></select>
+          <label for="provider" data-i18n="provider">服务商</label><select id="provider"><option value="openai">OpenAI</option><option value="anthropic">Anthropic</option><option value="deepseek">DeepSeek</option><option value="compatible" data-i18n="compatible">自定义兼容服务</option></select>
+          <label for="base-url" data-i18n="baseURL">服务地址</label><input id="base-url" type="url" required="required"/>
+          <label for="model" data-i18n="model">模型</label><input id="model" required="required"/>
+          <label for="api-key" data-i18n="apiKey">密钥</label><div><input id="api-key" type="password" autocomplete="off" data-i18n-placeholder="keyPlaceholder" placeholder="留空保留已有密钥"/><span id="key-status" class="muted field-status"></span></div>
+          <label for="language" data-i18n="outputLanguage">译文语言</label><input id="language" value="简体中文" required="required"/>
+        </div>
+        <div class="actions settings-actions"><button id="save-settings" type="submit" data-i18n="save">保存</button><button id="test-connection" type="button" data-i18n="test">测试连接</button></div>
+        <details><summary data-i18n="advanced">高级设置</summary><div class="form-grid">
+          <label for="chunk-size" data-i18n="chunkSize">分段字符数</label><input id="chunk-size" type="number" min="2000" max="24000" step="500" value="10000"/>
+          <label for="max-highlights" data-i18n="maxHighlights">重点上限</label><input id="max-highlights" type="number" min="1" max="40" value="14"/>
+          <button id="remove-key" type="button" data-i18n="removeKey">移除密钥</button>
+        </div></details>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

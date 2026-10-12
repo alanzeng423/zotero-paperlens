@@ -1,0 +1,32 @@
+/* Layout only. Zotero supplies platform controls, fonts and theme colors. */
+:root{color-scheme:light dark;--pl-bg:var(--material-sidepane,Canvas);--pl-text:var(--fill-primary,CanvasText);--pl-muted:var(--fill-secondary,GrayText);--pl-line:var(--color-border,ButtonBorder)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--pl-bg);color:var(--pl-text);font:message-box;font-size:13px;line-height:1.5}
+.tabs{position:sticky;top:0;z-index:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;padding:4px 0 6px;background:var(--pl-bg);border-bottom:1px solid var(--pl-line)}
+.tabs button{min-width:0;margin:0;font:inherit;white-space:nowrap}
+.tabs button[aria-selected=true]{font-weight:600}
+main{padding:8px 0;min-width:0;max-width:700px;margin:auto}
+body:not(.embedded) main,body:not(.embedded) .tabs{padding-inline:12px}
+button{font:inherit;cursor:default;min-height:24px;padding:2px 7px;white-space:normal}
+button:disabled{cursor:default}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:5px}
+.session-actions{margin-bottom:6px}.session-actions .muted{margin-inline-start:auto}
+.check{display:flex;align-items:center;gap:4px;font-size:12px;margin:4px 0 8px}input[type=checkbox]{margin:0}
+.muted{color:var(--pl-muted);font-size:12px}
+p{margin:5px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+h3{margin:0 0 4px;font:inherit;font-weight:600}
+.block{margin:10px 0}.block:first-child{margin-top:5px}.block ul{margin:4px 0;padding-inline-start:20px}.block li{margin:3px 0}
+.highlight-actions{margin:6px 0}.entry{padding:6px 0;border-bottom:1px solid var(--pl-line)}.entry:last-child{border-bottom:0}
+details{margin:6px 0;padding:3px 0;border-bottom:1px solid var(--pl-line)}details:last-child{border-bottom:0}
+summary{cursor:default;font-size:12px;font-weight:600;padding:3px 0;overflow-wrap:anywhere}details[open]>summary{margin-bottom:4px}
+.quote{font-size:12px;line-height:1.5}.page-link{font-size:11px;min-height:20px;padding:0 4px}
+.term{padding:5px 0;border-bottom:1px solid var(--pl-line);overflow-wrap:anywhere}.term:last-child{border-bottom:0}.term small{display:block;color:var(--pl-muted)}
+.translation{font-size:14px;line-height:1.65;margin:8px 0 12px}
+.translation-actions{margin-bottom:5px}.page-label{font-size:12px;white-space:nowrap}.page-label input{width:54px!important}
+input:not([type=checkbox]),select,textarea{font:inherit;color:var(--pl-text);background:var(--material-background,Field);width:100%;min-width:0;border:1px solid var(--pl-line);border-radius:2px;padding:3px 4px}
+textarea{resize:vertical;line-height:1.5;display:block}.form-grid{display:grid;grid-template-columns:minmax(60px,max-content) minmax(0,1fr);align-items:start;gap:7px 8px}.form-grid label{font-size:12px;padding-top:3px;max-width:100px;overflow-wrap:anywhere}.field-status{display:block;font-size:11px;margin-top:2px}.settings-actions{margin:8px 0}
+.notice{font-size:12px;padding:4px 0;margin-bottom:5px;overflow-wrap:anywhere}.notice.error{color:var(--color-invalid,MarkText)}
+progress{width:100%;height:6px;display:block;margin:6px 0}#progress-wrap{font-size:12px;margin:8px 0}
+.service-info{margin-top:10px}.service-info p{font-size:11px}#source-summary{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:300px){.form-grid{grid-template-columns:minmax(0,1fr);gap:3px}.form-grid label{max-width:none}.tabs button{font-size:12px;padding-inline:3px}}
