@@ -4,7 +4,7 @@
   const PROVIDERS = Object.freeze({
     openai: { name: "OpenAI", baseURL: "https://api.openai.com/v1", model: "gpt-4.1-mini", protocol: "openai" },
     anthropic: { name: "Anthropic · Claude", baseURL: "https://api.anthropic.com/v1", model: "claude-sonnet-4-6", protocol: "anthropic" },
-    deepseek: { name: "DeepSeek", baseURL: "https://api.deepseek.com", model: "deepseek-chat", protocol: "openai" },
+    deepseek: { name: "DeepSeek", baseURL: "https://api.deepseek.com", model: "deepseek-flash", protocol: "openai" },
     compatible: { name: "自定义 · OpenAI 兼容", baseURL: "http://localhost:11434/v1", model: "qwen3:8b", protocol: "openai" }
   });
   function endpoint(config) {
@@ -15,7 +15,7 @@
     if (url.protocol !== "https:" && !(url.protocol === "http:" && local)) throw new Error("远程 API 必须使用 HTTPS，本机服务可使用 HTTP。");
     return raw;
   }
-  function request(config, key, system, prompt, maxTokens = 4096) {
+  function request(config, key, system, prompt, maxTokens = 4096, options = {}) {
     const provider = PROVIDERS[config.provider];
     if (!provider || !String(config.model).trim()) throw new Error("请先设置服务商和模型。");
     const base = endpoint(config);
@@ -31,33 +31,49 @@
       if (key) headers.Authorization = "Bearer " + key;
       body = { model: config.model, messages: [{ role: "system", content: system }, { role: "user", content: prompt }], stream: false };
       body[config.provider === "openai" ? "max_completion_tokens" : "max_tokens"] = maxTokens;
+      if (config.provider === "deepseek") {
+        // Current DeepSeek defaults to thinking; this pipeline needs structured
+        // source notes, not a separate reasoning stream competing for the budget.
+        body.thinking = { type: "disabled" };
+        if (options.json) body.response_format = { type: "json_object" };
+      }
       path = "/chat/completions";
     }
     return { url: base + path, headers, body: JSON.stringify(body) };
+  }
+  class OutputLimitError extends Error {
+    constructor(usage) {
+      super("模型输出达到上限，未返回完整结果。请减小分段字符数后重新读取。");
+      this.code = "OUTPUT_LIMIT";
+      this.usage = usage;
+    }
   }
   function response(config, raw) {
     const data = typeof raw === "string" ? C.parseJSON(raw) : raw;
     let text, usage;
     if (PROVIDERS[config.provider].protocol === "anthropic") {
-      if (data.stop_reason === "max_tokens") throw new Error("模型输出被截断，请减小分段大小或更换模型。");
-      text = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
       usage = { input: data.usage?.input_tokens || 0, output: data.usage?.output_tokens || 0 };
+      if (data.stop_reason === "max_tokens") throw new OutputLimitError(usage);
+      text = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("\n");
     } else {
       const choice = data.choices?.[0];
-      if (choice?.finish_reason === "length") throw new Error("模型输出被截断，请减小分段大小或更换模型。");
-      text = choice?.message?.content;
       usage = { input: data.usage?.prompt_tokens || 0, output: data.usage?.completion_tokens || 0 };
+      if (choice?.finish_reason === "length") throw new OutputLimitError(usage);
+      text = choice?.message?.content;
     }
     if (typeof text !== "string" || !text.trim()) throw new Error("模型没有返回文本，可能被内容过滤或当前模型不兼容。");
     return { text, usage };
   }
   class Client {
     constructor({ transport, sleep }) { this.transport = transport; this.sleep = sleep; }
-    async complete(config, key, system, prompt, signal, maxTokens) {
-      for (let attempt = 0; attempt < 3; attempt++) {
+    async complete(config, key, system, prompt, signal, maxTokens = 4096, options = {}) {
+      let budget = config.provider === "deepseek" && options.json ? Math.min(32768, Math.max(8192, maxTokens * 2)) : maxTokens;
+      let expanded = false, failures = 0;
+      const spent = { input: 0, output: 0 };
+      for (;;) {
         C.abort(signal);
         try {
-          const res = await this.transport({ ...request(config, key, system, prompt, maxTokens), signal });
+          const res = await this.transport({ ...request(config, key, system, prompt, budget, options), signal });
           C.abort(signal);
           if (res.status < 200 || res.status >= 300) {
             const error = new Error(res.status === 401 || res.status === 403
@@ -67,16 +83,27 @@
             error.status = res.status;
             throw error;
           }
-          return response(config, res.body);
+          const result = response(config, res.body);
+          return { ...result, usage: { input: spent.input + result.usage.input, output: spent.output + result.usage.output } };
         } catch (error) {
           C.abort(signal);
-          if (attempt === 2 || !(error.status === 429 || error.status >= 500)) throw error;
-          await this.sleep(1000 * 2 ** attempt, signal);
+          if (error.code === "OUTPUT_LIMIT") {
+            spent.input += error.usage.input; spent.output += error.usage.output;
+            if (!expanded && budget < 32768) {
+              expanded = true;
+              budget = Math.min(32768, budget * 2);
+              continue;
+            }
+            error.usage = { ...spent };
+            throw error;
+          }
+          if (failures === 2 || !(error.status === 429 || error.status >= 500)) throw error;
+          await this.sleep(1000 * 2 ** failures++, signal);
         }
       }
     }
     async json(config, key, system, prompt, signal, maxTokens) {
-      const result = await this.complete(config, key, system + "\nReturn a single JSON object only, no Markdown.", prompt, signal, maxTokens);
+      const result = await this.complete(config, key, system + "\nReturn a single JSON object only, no Markdown.", prompt, signal, maxTokens, { json: true });
       return { data: C.parseJSON(result.text), usage: result.usage };
     }
   }

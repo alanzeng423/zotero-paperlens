@@ -24,7 +24,7 @@ Text PDFs are supported. Scanned PDFs need OCR first. PaperLens does not analyze
 
 ## Installation
 
-1. Download **`zotero-paperlens-0.1.3.xpi`** from the [latest release](https://github.com/alanzeng423/zotero-paperlens/releases/latest).
+1. Download **`zotero-paperlens-0.1.4.xpi`** from the [latest release](https://github.com/alanzeng423/zotero-paperlens/releases/latest).
 2. In Zotero, open **Tools → Plugins**.
 3. Open the gear menu and choose **Install Plugin From File…**.
 4. Select the downloaded `.xpi` file.
@@ -54,8 +54,10 @@ Detached PDF reader windows use a separate PaperLens window because they do not 
 | --- | --- | --- | --- |
 | OpenAI | Chat Completions | `https://api.openai.com/v1` | `gpt-4.1-mini` |
 | Anthropic | Messages | `https://api.anthropic.com/v1` | `claude-sonnet-4-6` |
-| DeepSeek | Chat Completions | `https://api.deepseek.com` | `deepseek-chat` |
+| DeepSeek | Chat Completions | `https://api.deepseek.com` | `deepseek-flash` |
 | Custom / local | OpenAI-compatible Chat Completions | `http://localhost:11434/v1` | `qwen3:8b` |
+
+DeepSeek uses non-thinking JSON mode for reading notes and contextual translation, with at least 8,192 output tokens. If a response is truncated, the plugin retries once with a larger budget (up to 32,768 tokens) and counts both responses in the reported usage. Partial results are never saved as completed reading.
 
 These are editable presets, not promises of model availability. Use a model ID available to your account. A custom endpoint must support Chat Completions and return the structured text requested by the plugin. The local preset does not install or start a model server.
 
@@ -100,7 +102,7 @@ npm test
 npm run build
 ```
 
-Output: `dist/zotero-paperlens-0.1.3.xpi`. The XPI contains the add-on runtime and license; tests, documentation, and local data are excluded.
+Output: `dist/zotero-paperlens-0.1.4.xpi`. The XPI contains the add-on runtime and license; tests, documentation, and local data are excluded.
 
 | Path | Responsibility |
 | --- | --- |

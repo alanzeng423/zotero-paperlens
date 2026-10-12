@@ -102,6 +102,66 @@ await test("truncated outputs are rejected for both protocols",()=>{
   assert.throws(()=>L.response(config,{choices:[{finish_reason:"length",message:{content:"partial"}}]}));
   assert.throws(()=>L.response({...config,provider:"anthropic"},{stop_reason:"max_tokens",content:[{type:"text",text:"partial"}]}));
 });
+await test("DeepSeek JSON calls use the current model, explicit non-thinking and enough output room",async()=>{
+  const cfg={...config,provider:"deepseek",...L.PROVIDERS.deepseek};
+  let body;
+  const client=new L.Client({sleep:async()=>{},transport:async req=>{
+    body=JSON.parse(req.body);
+    return {status:200,body:{choices:[{finish_reason:"stop",message:{content:'{"ok":true}'}}]}};
+  }});
+  equal((await client.json(cfg,"key","system","input",undefined,4096)).data,{ok:true});
+  equal(body.model,"deepseek-flash");equal(body.thinking,{type:"disabled"});
+  equal(body.response_format,{type:"json_object"});equal(body.max_tokens,8192);
+  await client.complete(cfg,"key","Reply briefly.","Say OK.",undefined,32);
+  equal(body.max_tokens,32);check(!("response_format" in body));
+  await client.json(cfg,"key","system","input",undefined,32768);
+  equal(body.max_tokens,32768);
+});
+await test("DeepSeek-specific parameters are not sent to other providers",()=>{
+  for(const provider of ["openai","compatible","anthropic"]){
+    const body=JSON.parse(L.request({...config,provider,baseURL:L.PROVIDERS[provider].baseURL},"key","s","u",4096,{json:true}).body);
+    check(!("thinking" in body));check(!("response_format" in body));
+  }
+});
+await test("truncated JSON is retried once with a larger budget and both attempts are counted",async()=>{
+  const budgets=[],prompts=[];
+  const client=new L.Client({sleep:async()=>{},transport:async req=>{
+    const body=JSON.parse(req.body);budgets.push(body.max_tokens);prompts.push(body.messages);
+    return {status:200,body:{choices:[{finish_reason:budgets.length===1?"length":"stop",message:{content:budgets.length===1?'{"ok":':'{"ok":true}'}}],
+      usage:{prompt_tokens:10,completion_tokens:budgets.length===1?8192:20}}};
+  }});
+  const result=await client.json({...config,provider:"deepseek",baseURL:"https://api.deepseek.com"},"key","s","u",undefined,4096);
+  equal(result.data,{ok:true});equal(budgets,[8192,16384]);equal(prompts[0],prompts[1]);
+  equal(result.usage,{input:20,output:8212});
+});
+await test("output recovery stops after one retry and never exceeds its token cap",async()=>{
+  const budgets=[];
+  const client=new L.Client({sleep:async()=>{},transport:async req=>{
+    const body=JSON.parse(req.body);budgets.push(body.max_tokens);
+    return {status:200,body:{stop_reason:"max_tokens",content:[{type:"text",text:'{"partial":'}],usage:{input_tokens:10,output_tokens:body.max_tokens}}};
+  }});
+  await assert.rejects(()=>client.json({...config,provider:"anthropic",baseURL:"https://api.anthropic.com/v1"},"key","s","u",undefined,20000),error=>error.code==="OUTPUT_LIMIT");
+  equal(budgets,[20000,32768]);
+});
+await test("exhausted output retry preserves finished fragments and resumes without storing partial JSON",async()=>{
+  const f=fixture(),original=f.llm.json,seen=new Map();let recover=false;
+  const cfg={...config,provider:"deepseek",baseURL:"https://api.deepseek.com",model:"deepseek-flash"};
+  f.engine.llm=new L.Client({sleep:async()=>{},transport:async req=>{
+    const body=JSON.parse(req.body),prompt=body.messages[1].content,input=JSON.parse(prompt),id=input.source?.id;
+    if(id)seen.set(id,(seen.get(id)||0)+1);
+    if(input.source?.pageIndex===1&&!recover)return {status:200,body:{choices:[{finish_reason:"length",message:{content:'{"summary":"partial'}}]}};
+    const result=await original(cfg,"key",body.messages[0].content,prompt);
+    return {status:200,body:{choices:[{finish_reason:"stop",message:{content:JSON.stringify(result.data)}}],usage:{prompt_tokens:result.usage.input,completion_tokens:result.usage.output}}};
+  }});
+  const args={id:"1-ABCDEFGH",title:"Test",pages,config:cfg,key:"key"};
+  await assert.rejects(()=>f.engine.read(args),error=>error.code==="OUTPUT_LIMIT");
+  const interrupted=await f.store.load(args.id),parts=C.chunks(pages,cfg.chunkSize);
+  equal(interrupted.status,"error");equal(Object.keys(interrupted.notes),[parts[0].id]);check(!interrupted.digest);
+  recover=true;
+  const session=await f.engine.read(args);
+  equal(session.status,"ready");equal(seen.get(parts[0].id),1);equal(seen.get(parts[1].id),3);
+  equal(f.counts(),{readCalls:2,synthesisCalls:1,translationCalls:0});
+});
 await test("429 retry succeeds and 401 is never retried",async()=>{
   let count=0;
   const client=new L.Client({sleep:async()=>{},transport:async()=>++count===1?{status:429,body:""}:{status:200,body:JSON.stringify({choices:[{finish_reason:"stop",message:{content:"ok"}}]})}});

@@ -1,6 +1,6 @@
 {
   "name": "zotero-paperlens",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "private": true,
   "type": "module",
   "description": "Zotero 9/10 full-paper reading sessions and grounded translation",

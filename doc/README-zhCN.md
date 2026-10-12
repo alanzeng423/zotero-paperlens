@@ -24,7 +24,7 @@ PaperLens 是一款先读论文、再结合全文翻译选文的 Zotero 插件�
 
 ## 安装
 
-1. 从[最新 Release](https://github.com/alanzeng423/zotero-paperlens/releases/latest) 下载 **`zotero-paperlens-0.1.3.xpi`**。
+1. 从[最新 Release](https://github.com/alanzeng423/zotero-paperlens/releases/latest) 下载 **`zotero-paperlens-0.1.4.xpi`**。
 2. 在 Zotero 中打开「**工具 → 插件**」。
 3. 点击齿轮菜单，选择「**从文件安装插件…**」。
 4. 选择下载的 `.xpi` 文件。
@@ -54,8 +54,10 @@ PaperLens 是一款先读论文、再结合全文翻译选文的 Zotero 插件�
 | --- | --- | --- | --- |
 | OpenAI | Chat Completions | `https://api.openai.com/v1` | `gpt-4.1-mini` |
 | Anthropic | Messages | `https://api.anthropic.com/v1` | `claude-sonnet-4-6` |
-| DeepSeek | Chat Completions | `https://api.deepseek.com` | `deepseek-chat` |
+| DeepSeek | Chat Completions | `https://api.deepseek.com` | `deepseek-flash` |
 | 自定义 / 本地服务 | OpenAI 兼容 Chat Completions | `http://localhost:11434/v1` | `qwen3:8b` |
+
+DeepSeek 的阅读笔记与上下文翻译使用非思考 JSON 模式，输出预算至少为 8,192 tokens。结果被截断时，插件会提高预算重试一次，上限为 32,768 tokens，并将两次响应计入用量。半截结果不会保存为已完成的阅读。
 
 预填值可以修改，不代表服务商始终提供这些模型。请填写账号实际可用的模型 ID。自定义接口需要支持 Chat Completions，并返回插件要求的结构化文字。本地预设不会安装或启动模型服务器。
 
@@ -100,7 +102,7 @@ npm test
 npm run build
 ```
 
-输出为 `dist/zotero-paperlens-0.1.3.xpi`。安装包只包含插件运行资源和许可证，不包含测试、文档或本地数据。
+输出为 `dist/zotero-paperlens-0.1.4.xpi`。安装包只包含插件运行资源和许可证，不包含测试、文档或本地数据。
 
 | 路径 | 内容 |
 | --- | --- |

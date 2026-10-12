@@ -46,6 +46,8 @@
     }
   };
   const errors={
+    "模型输出达到上限，未返回完整结果。请减小分段字符数后重新读取。":"The model reached its output limit. Reduce the chunk size and read the paper again.",
+    "模型输出被截断，请减小分段大小或更换模型。":"The model reached its output limit. Reduce the chunk size or use another model.",
     "操作已取消。":"Cancelled.","插件已关闭。":"The plugin is disabled.",
     "这篇论文已有任务正在运行，请等待或取消。":"This paper has a running task. Wait or cancel it.",
     "请等待当前任务完成后切换高亮。":"Wait for the current task before toggling highlights.",

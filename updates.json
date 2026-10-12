@@ -3,9 +3,9 @@
     "paperlens@alanzeng.local": {
       "updates": [
         {
-          "version": "0.1.3",
-          "update_link": "https://github.com/alanzeng423/zotero-paperlens/releases/download/v0.1.3/zotero-paperlens-0.1.3.xpi",
-          "update_hash": "sha256:b1ac445105256d80689a9b0e747c0f4dfa8d8e66f33fbb756689ff36ff568b3d",
+          "version": "0.1.4",
+          "update_link": "https://github.com/alanzeng423/zotero-paperlens/releases/download/v0.1.4/zotero-paperlens-0.1.4.xpi",
+          "update_hash": "sha256:1cdb0fb6f827dd15f55b60e4a936ce0c5bd3f341ac5429dd9f7c5fe6c58676d4",
           "applications": {
             "zotero": {
               "strict_min_version": "9.0",
