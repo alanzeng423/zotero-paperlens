@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "paperlens@alanzeng.local": {
+      "updates": [
+        {
+          "version": "0.1.3",
+          "update_link": "https://github.com/alanzeng423/zotero-paperlens/releases/download/v0.1.3/zotero-paperlens-0.1.3.xpi",
+          "update_hash": "sha256:b1ac445105256d80689a9b0e747c0f4dfa8d8e66f33fbb756689ff36ff568b3d",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "9.0",
+              "strict_max_version": "10.0.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
